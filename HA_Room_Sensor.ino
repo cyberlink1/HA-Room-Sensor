@@ -42,6 +42,8 @@ static unsigned long lastSampleTime = 0 - Minutes;  // initialize such that a re
 // Settings
 char mqtt_server[20];
 char mqtt_port[6];
+char mqtt_user[8];
+char mqtt_passwd[10];
 char update_server[20];
 char Sensor_Name[20];
 bool shouldSaveConfig = false;
@@ -89,7 +91,7 @@ void reconnect() {
  
   while (!client.connected()) {
 
-    if (client.connect("ESP8266Client", "guest", "quest")) {
+    if (client.connect(Sensor_Name, mqtt_user, mqtt_passwd)) {
       MQTT_Status = true;
 
     } else {
@@ -136,6 +138,8 @@ void WiFiConfig(){
         if (json.success()) {
           strcpy(mqtt_server, json["mqtt_server"]);
           strcpy(mqtt_port, json["mqtt_port"]);
+          strcpy(mqtt_user, json["mqtt_user"]);
+          strcpy(mqtt_passwd, json["mqtt_passwd"]);
           strcpy(update_server, json["update_server"]);
           strcpy(Sensor_Name, json["Sensor_Name"]);
           
@@ -147,7 +151,7 @@ void WiFiConfig(){
   } else {
   
   }
-  //end read
+ 
 
 
 
@@ -156,6 +160,8 @@ void WiFiConfig(){
   // id/name placeholder/prompt default length
   WiFiManagerParameter custom_mqtt_server("server", "mqtt server", mqtt_server, 40);
   WiFiManagerParameter custom_mqtt_port("port", "mqtt port", mqtt_port, 6);
+  WiFiManagerParameter custom_mqtt_user("MQTT User", "mqtt user", mqtt_server, 8);
+  WiFiManagerParameter custom_mqtt_passwd("MQTT Password", "mqtt passwd", mqtt_server, 10);
   WiFiManagerParameter custom_update_server("Userver", "Update Server", update_server, 40);
   WiFiManagerParameter custom_Sensor_Name("Sensor_Name", "Sensor Name", Sensor_Name, 40);
   
@@ -169,6 +175,8 @@ void WiFiConfig(){
   //add all your parameters here
   wifiManager.addParameter(&custom_mqtt_server);
   wifiManager.addParameter(&custom_mqtt_port);
+  wifiManager.addParameter(&custom_mqtt_user);
+  wifiManager.addParameter(&custom_mqtt_passwd);
   wifiManager.addParameter(&custom_update_server);
   wifiManager.addParameter(&custom_Sensor_Name);
   
@@ -192,6 +200,8 @@ void WiFiConfig(){
   //read updated parameters
   strcpy(mqtt_server, custom_mqtt_server.getValue());
   strcpy(mqtt_port, custom_mqtt_port.getValue());
+  strcpy(mqtt_user, custom_mqtt_user.getValue());
+  strcpy(mqtt_passwd, custom_mqtt_passwd.getValue());
   strcpy(update_server, custom_update_server.getValue());
   strcpy(Sensor_Name, custom_Sensor_Name.getValue());
 
@@ -203,6 +213,8 @@ void WiFiConfig(){
     JsonObject& json = jsonBuffer.createObject();
     json["mqtt_server"] = mqtt_server;
     json["mqtt_port"] = mqtt_port;
+    json["mqtt_user"] = mqtt_user;
+    json["mqtt_passwd"] = mqtt_passwd;
     json["update_server"] = update_server;
     json["Sensor_Name"] = Sensor_Name;
 
