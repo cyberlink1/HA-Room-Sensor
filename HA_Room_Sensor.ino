@@ -11,8 +11,9 @@
 
 DHTesp dht;
 Adafruit_BMP085 bmp;
-WiFiClient espClient;
-PubSubClient client(espClient);
+
+    WiFiClient espClient;
+    PubSubClient client(espClient);
 
 /*
  *  Define the pins the sensors are connected to
@@ -40,7 +41,7 @@ float humidity;
 const unsigned long Minutes = 1 * 60 * 1000UL;
 static unsigned long lastSampleTime = 0 - Minutes;  // initialize such that a reading is due the first time through
 static unsigned long pir_time_set = 0 - Minutes;
-unsigned long lastMemReport = 0;
+
 
 // Settings
 char mqtt_server[20];
@@ -55,8 +56,6 @@ bool shouldSaveConfig = false;
 bool MQTT_Status;
 bool MQTT_Message;
 float LState;
-
-
 
 ESP8266WebServer server(80);
 
@@ -410,18 +409,12 @@ void loop() {
   
   // Check MQTT Connection and reconnect if needed
   if (!client.connected()) {
+
   reconnect();
  }
 // Pull Sensor Data and post to MQTT
  Sensor_Data();
   // Handle webpage requests
   server.handleClient();
-
-  if (millis() - lastMemReport >= 2000)
-  {
-    lastMemReport = millis();
-    Serial.print("available memory=");
-    Serial.println(ESP.getFreeHeap(), DEC);
-  }
   
 }
