@@ -1,0 +1,7 @@
+
+Light to A0
+DHT11 to D4
+Motion to D7
+SLC to D1 
+SDA to D2 
+
