@@ -249,7 +249,7 @@ float calculateHeatIndex() {
 
 void Sensor_Data() {
   
-//unsigned long time_now = millis();
+unsigned long time_now = millis();
 
 /*
  *  Pull LDR Reading and report only if the change is greater than 20
@@ -283,7 +283,7 @@ delay(10);
        } else if (state && MotionSensor) {
         again = true;
        } else if (!state && MotionSensor) {
-         if (millis() - pir_time_set >= Minutes) {
+         if (time_now - pir_time_set >= Minutes) {
           if (again) { 
             pir_time_set += Minutes; 
             again = false;
@@ -298,7 +298,7 @@ delay(10);
 /*      
  *       The other sensors only need to be read once a min and reported
  */
-if (millis() - lastSampleTime >= Minutes){
+if (time_now - lastSampleTime >= Minutes){
    lastSampleTime += Minutes;
    Temperature = bmp.readTemperature();
    TemperatureF = (Temperature * 1.8) + 32;
@@ -317,42 +317,63 @@ if (millis() - lastSampleTime >= Minutes){
  * 
  */
 void handleRoot() {
-  char HTML_CODE[1500];
+  char HTML_CODE[1500]  = "";
+  char HTML_buffer[10] = "";
   float HeatIndex = calculateHeatIndex();
-  snprintf  (HTML_CODE, 1500,
-"<html><head> <title>Room Sensor</title></head>\
-<body><h1 style=\"text-align: center;\">Room Sensor</h1><p>&nbsp;</p>\
-<table align=\"center\" border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:500px;\">\
-<caption><B>Readings</b></caption><tbody>\
-<tr><td>Motion</td><td>%s</td></tr>\
-<tr><td>Light reading</td><td>%1.2f</td></tr>\
-<tr><td>Temperature</td><td>%2.2f C</td></tr>\
-<tr><td>Temperature in F</td><td>%2.2f F</td></tr>\
-<tr><td>Humidity</td><td>%2.0f %% </td></tr>\
-<tr><td>Heat Index</td><td>%2.2f %% </td></tr>\
-<tr><td>Barometric Pressure</td><td>%i Pa</td></tr>\
-<tr><td>MQTT Status</td><td>%s</td></tr>\
-<tr><td>Last MQTT Message</td><td>%s</td></tr>\
-</tbody></table>\
-<table align=\"center\" border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:500px;\">\
-<caption><b>Settings</b></caption><tbody>\
-<tr><td>Sensor Name</td><td>%s</td></tr>\
-<tr><td>MQTT Server</td><td>%s</td></tr>\
-<tr><td>MQTT Port</td><td>%s</td></tr>\
-<tr><td>Update Server</td><td>%s</td></tr>\
-</tbody></table>\
-<p><center><h3><a href=\"/reset\">Reset Config</a></p></h3><center></body></html>",
-MotionSensor ? "true" : "false", LightReading, Temperature, TemperatureF, humidity, HeatIndex, Pressure, MQTT_Status  ? "Connected" : "Connection Failed", MQTT_Message ? "Success" : "Failed", Sensor_Name, mqtt_server, mqtt_port, update_server
-);
-                    
-  server.send_P(200, "text/html", HTML_CODE);
-}
 
+  strcat(HTML_CODE, "<html><head> <title>Room Sensor</title></head><body><h1 style=\"text-align: center;\">Room Sensor</h1><p>&nbsp;</p><table align=\"center\" border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:500px;\"><caption><B>Readings</b></caption><tbody>");
+  strcat(HTML_CODE, "<tr><td>Motion</td><td>");
+  if (MotionSensor) {
+    strcat(HTML_CODE, "True");
+  }else{
+    strcat(HTML_CODE, "False");
+  }
+  strcat(HTML_CODE, "</td></tr><tr><td>Light reading</td><td>");
+  dtostrf(LightReading, 4, 2, HTML_buffer);
+  strcat(HTML_CODE, HTML_buffer);
+  strcat(HTML_CODE, "</td></tr><tr><td>Temperature</td><td>");
+  dtostrf(Temperature, 4, 2, HTML_buffer);
+  strcat(HTML_CODE, HTML_buffer);
+  strcat(HTML_CODE, " C</td></tr><tr><td>Temperature in F</td><td>");
+  dtostrf(TemperatureF, 4, 2, HTML_buffer);
+  strcat(HTML_CODE, HTML_buffer);
+  strcat(HTML_CODE, " F</td></tr><tr><td>Humidity</td><td>");
+  dtostrf(humidity, 4, 2, HTML_buffer);
+  strcat(HTML_CODE, HTML_buffer);
+  strcat(HTML_CODE, " C </td></tr><tr><td>Heat Index</td><td>");
+  dtostrf(HeatIndex, 4, 2, HTML_buffer);
+  strcat(HTML_CODE, HTML_buffer);
+  strcat(HTML_CODE, " C </td></tr><tr><td>Barometric Pressure</td><td>");
+  dtostrf(Pressure, 7, 0, HTML_buffer);
+  strcat(HTML_CODE, HTML_buffer);
+  strcat(HTML_CODE, " Pa</td></tr><tr><td>MQTT Status</td><td>");
+  if (MQTT_Status) {
+     strcat(HTML_CODE, "Connected");
+  }else{
+     strcat(HTML_CODE, "Connection Failed");
+  }
+  strcat(HTML_CODE, "</td></tr><tr><td>Last MQTT Message</td><td>");
+  if (MQTT_Message) {
+    strcat(HTML_CODE, "Success");
+  }else{
+    strcat(HTML_CODE, "Failed");
+  }
+  strcat(HTML_CODE, "</td></tr></tbody></table><table align=\"center\" border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:500px;\"><caption><b>Settings</b></caption><tbody><tr><td>Sensor Name</td><td>");
+  strcat(HTML_CODE, Sensor_Name);
+  strcat(HTML_CODE, "</td></tr><tr><td>MQTT Server</td><td>");
+  strcat(HTML_CODE, mqtt_server);
+  strcat(HTML_CODE, "</td></tr><tr><td>MQTT Port</td><td>");
+  strcat(HTML_CODE, mqtt_port);
+  strcat(HTML_CODE, "</td></tr><tr><td>Update Server</td><td>");
+  strcat(HTML_CODE, update_server);
+  strcat(HTML_CODE, "</td></tr></tbody></table><p><center><h3><a href=\"/reset\">Reset Config</a></p></h3><center></body></html>");          
+    server.send(200, "text/html", HTML_CODE);
+}
 
 void handleReset() {
   char HTML_CODE[236];
   if (server.hasArg("con")) {
-  snprintf_P  (HTML_CODE, 224,
+  snprintf (HTML_CODE, 224,
 "  <html><head> <title>Room Sensor</title></head>\
 <body><h1 style=\"text-align: center;\">Room Sensor</h1>\
 <center><h1>Resetting Config!!!</h1></center><br><br>\
@@ -362,12 +383,7 @@ void handleReset() {
              delay(1000);
              WiFi.disconnect();
   } else {  
-  snprintf_P  (HTML_CODE, 236,
-"<html><head> <title>Room Sensor</title></head>\
-<body><h1 style=\"text-align: center;\">Room Sensor</h1>\
-<p>Are you sure you want to reset the config?</p><BR>\
-<a href=\"/reset?con=Yes\">Yes!</a><br><BR><BR><BR><a href=\"/\">No!</a>"
-             );
+  snprintf (HTML_CODE, 236,"<html><head> <title>Room Sensor</title></head> <body><h1 style=\"text-align: center;\">Room Sensor</h1> <p>Are you sure you want to reset the config?</p><BR> <a href=\"/reset?con=Yes\">Yes!</a><br><BR><BR><BR><a href=\"/\">No!</a>" );
              server.send(200, F("text/html"), HTML_CODE);
   }           
   
